@@ -16,6 +16,7 @@ type ViewManager struct {
 	DefinitionsDirectory string
 	Templates            map[string]*template.Template
 	Definitions          map[string][]string
+	FuncMap              template.FuncMap
 }
 
 // ViewConfig is used to configure how ikviews loads templates
@@ -23,14 +24,16 @@ type ViewConfig struct {
 	Directory            string
 	DefinitionsDirectory string
 	Content              fs.FS
+	FuncMap              template.FuncMap
 }
 
-// ikViewManager is the ViewManager singleton
-var ikViewManager = ViewManager{
+// viewManager is the ViewManager singleton
+var viewManager = ViewManager{
 	Directory:            "templates",
 	DefinitionsDirectory: "definitions",
 	Templates:            map[string]*template.Template{},
 	Definitions:          map[string][]string{},
+	FuncMap:              map[string]interface{}{},
 }
 
 // Configure sets the Directory, DefinitionsDirectory and Content
@@ -39,26 +42,27 @@ func Configure(vc *ViewConfig) error {
 	if vc.Content == nil {
 		return fmt.Errorf("ViewConfig.Content must contain an instance of `embed.FS` ")
 	}
-	ikViewManager.content = vc.Content
+	viewManager.content = vc.Content
 	if vc.Directory != "" {
-		ikViewManager.Directory = vc.Directory
+		viewManager.Directory = vc.Directory
 	}
 
 	if vc.DefinitionsDirectory != "" {
-		ikViewManager.DefinitionsDirectory = vc.DefinitionsDirectory
+		viewManager.DefinitionsDirectory = vc.DefinitionsDirectory
 	}
+	viewManager.FuncMap = vc.FuncMap
 
-	return ikViewManager.loadTemplates()
+	return viewManager.loadTemplates()
 }
 
 // GetHTMLView returns a populated that matches the name with an .html extension
 func GetHTMLView(name string, data interface{}) (*bytes.Buffer, error) {
-	return ikViewManager.getPopulatedTemplate(name, "html", data)
+	return viewManager.getPopulatedTemplate(name, "html", data)
 }
 
 // GetTextView returns a populated that matches the name with an .txt extension
 func GetTextView(name string, data interface{}) (*bytes.Buffer, error) {
-	return ikViewManager.getPopulatedTemplate(name, "txt", data)
+	return viewManager.getPopulatedTemplate(name, "txt", data)
 }
 
 // getTemplate returns the cached template
@@ -124,7 +128,7 @@ func (vm *ViewManager) loadTemplates() error {
 		paths := append(vm.Definitions[ext], path)
 
 		var tmpl *template.Template
-		tmpl, err = template.New(filepath.Base(d.Name())).ParseFS(vm.content, paths...)
+		tmpl, err = template.New(filepath.Base(d.Name())).Funcs(vm.FuncMap).ParseFS(vm.content, paths...)
 		if err != nil {
 			return err
 		}

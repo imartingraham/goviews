@@ -3,6 +3,7 @@ package main
 import (
 	"embed"
 	"fmt"
+	"strings"
 	"views/pkg/views"
 )
 
@@ -20,6 +21,9 @@ func main() {
 		Directory:            "templates",
 		DefinitionsDirectory: "definitions",
 		Content:              content,
+		FuncMap: map[string]interface{}{
+			"title": strings.Title,
+		},
 	})
 
 	if err != nil {
@@ -28,7 +32,7 @@ func main() {
 
 	data := User{
 		ID:        1,
-		FirstName: "Test",
+		FirstName: "test",
 		LastName:  "Testerson",
 	}
 	testView := views.BaseView{
