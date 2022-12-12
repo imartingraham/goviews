@@ -1,0 +1,3 @@
+{{define "footer"}}
+{{.LastName}}
+{{- end}}

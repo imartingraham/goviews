@@ -1,0 +1,3 @@
+{{- template "header" .}}
+User {{.FirstName}} {{.LastName}}
+{{- template "footer" .}}
