@@ -56,18 +56,22 @@ func Configure(vc *ViewConfig) error {
 }
 
 // GetHTMLView returns a populated that matches the name with an .html extension
-func GetHTMLView(name string, data interface{}) (*bytes.Buffer, error) {
-	return viewManager.getPopulatedTemplate(name, "html", data)
+func GetHTMLView(view IView) (*bytes.Buffer, error) {
+	return GetViewByFormat(view, "html")
 }
 
 // GetTextView returns a populated that matches the name with an .txt extension
-func GetTextView(name string, data interface{}) (*bytes.Buffer, error) {
-	return viewManager.getPopulatedTemplate(name, "txt", data)
+func GetTextView(view IView) (*bytes.Buffer, error) {
+	return GetViewByFormat(view, "txt")
+}
+
+func GetViewByFormat(view IView, format string) (*bytes.Buffer, error) {
+	return viewManager.getPopulatedTemplate(view, format)
 }
 
 // getTemplate returns the cached template
-func (vm *ViewManager) getTemplate(name string, format string) (*template.Template, error) {
-	tmplName := vm.Directory + "/" + name + "." + format
+func (vm *ViewManager) getTemplate(view IView, format string) (*template.Template, error) {
+	tmplName := vm.Directory + "/" + view.GetTemplateName() + "." + format
 	tmpl, ok := vm.Templates[tmplName]
 	if !ok {
 		return nil, fmt.Errorf("template file at %s not found", tmplName)
@@ -76,14 +80,14 @@ func (vm *ViewManager) getTemplate(name string, format string) (*template.Templa
 }
 
 // getPopulatedTemplate injects the data into the template
-func (vm *ViewManager) getPopulatedTemplate(name string, format string, data interface{}) (*bytes.Buffer, error) {
-	tmpl, err := vm.getTemplate(name, format)
+func (vm *ViewManager) getPopulatedTemplate(view IView, format string) (*bytes.Buffer, error) {
+	tmpl, err := vm.getTemplate(view, format)
 	if err != nil {
 		return nil, err
 	}
 
 	tpl := &bytes.Buffer{}
-	err = tmpl.Execute(tpl, data)
+	err = tmpl.Execute(tpl, view.GetTemplateData())
 	if err != nil {
 		return nil, err
 	}

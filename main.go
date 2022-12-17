@@ -16,6 +16,16 @@ type User struct {
 	LastName  string
 }
 
+type Button struct {
+	Title string
+	Type  string
+}
+
+type UserEmail struct {
+	User   User
+	Button Button
+}
+
 func main() {
 	err := views.Configure(&views.ViewConfig{
 		Directory:            "templates",
@@ -30,14 +40,20 @@ func main() {
 		panic(err)
 	}
 
-	data := User{
+	user := User{
 		ID:        1,
 		FirstName: "test",
 		LastName:  "Testerson",
 	}
 	testView := views.BaseView{
 		Template: "email/index",
-		Data:     data,
+		Data: UserEmail{
+			User: user,
+			Button: Button{
+				Title: "Hello",
+				Type:  "submit",
+			},
+		},
 	}
 
 	html, err := testView.GetHTML()

@@ -1,3 +1,4 @@
 {{define "footer"}}
-<h1>{{.LastName}}</h1>
+<h1>{{.User.LastName}}</h1>
+{{- template "button" .Button}}
 {{- end}}
