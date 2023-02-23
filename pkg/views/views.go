@@ -28,7 +28,7 @@ type ViewConfig struct {
 }
 
 // viewManager is the ViewManager singleton
-var viewManager = ViewManager{
+var viewManager = &ViewManager{
 	Directory:            "templates",
 	DefinitionsDirectory: "definitions",
 	Templates:            map[string]*template.Template{},
@@ -39,20 +39,39 @@ var viewManager = ViewManager{
 // Configure sets the Directory, DefinitionsDirectory and Content
 // values and then loads all the templates found in `Content`
 func Configure(vc *ViewConfig) error {
+	var err error
+	viewManager, err = Init(vc)
+	return err
+}
+
+func Init(vc *ViewConfig) (*ViewManager, error) {
 	if vc.Content == nil {
-		return fmt.Errorf("ViewConfig.Content must contain an instance of `embed.FS` ")
+		return nil, fmt.Errorf("ViewConfig.Content must contain an instance of `embed.FS` ")
 	}
-	viewManager.content = vc.Content
+	manager := &ViewManager{
+		Directory:            "templates",
+		DefinitionsDirectory: "definitions",
+		Templates:            map[string]*template.Template{},
+		Definitions:          map[string][]string{},
+		FuncMap:              map[string]interface{}{},
+	}
+
+	manager.content = vc.Content
 	if vc.Directory != "" {
-		viewManager.Directory = vc.Directory
+		manager.Directory = vc.Directory
 	}
 
 	if vc.DefinitionsDirectory != "" {
-		viewManager.DefinitionsDirectory = vc.DefinitionsDirectory
+		manager.DefinitionsDirectory = vc.DefinitionsDirectory
 	}
-	viewManager.FuncMap = vc.FuncMap
+	manager.FuncMap = vc.FuncMap
 
-	return viewManager.loadTemplates()
+	err := manager.loadTemplates()
+	if err != nil {
+		return nil, err
+	}
+	return manager, nil
+
 }
 
 // GetHTMLView returns a populated that matches the name with an .html extension
@@ -66,7 +85,7 @@ func GetTextView(view IView) (*bytes.Buffer, error) {
 }
 
 func GetViewByFormat(view IView, format string) (*bytes.Buffer, error) {
-	return viewManager.getPopulatedTemplate(view, format)
+	return viewManager.GetPopulatedTemplate(view, format)
 }
 
 // getTemplate returns the cached template
@@ -80,7 +99,7 @@ func (vm *ViewManager) getTemplate(view IView, format string) (*template.Templat
 }
 
 // getPopulatedTemplate injects the data into the template
-func (vm *ViewManager) getPopulatedTemplate(view IView, format string) (*bytes.Buffer, error) {
+func (vm *ViewManager) GetPopulatedTemplate(view IView, format string) (*bytes.Buffer, error) {
 	tmpl, err := vm.getTemplate(view, format)
 	if err != nil {
 		return nil, err
