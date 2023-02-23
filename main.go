@@ -42,9 +42,6 @@ func main() {
 				"title": strings.Title,
 			},
 		},
-		// Service: &mailer.SendgridService{
-		// 	APIKey: os.Getenv("SENDGRID_API_KEY"),
-		// },
 		Service: &mailer.MailgunService{
 			URL:        os.Getenv("MAILGUN_DOMAIN"),
 			PrivateKey: os.Getenv("MAILGUN_PRIVATE_KEY"),
